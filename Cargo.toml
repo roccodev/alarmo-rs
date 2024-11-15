@@ -1,0 +1,20 @@
+[package]
+name = "alarmo"
+version = "0.1.0"
+description = "Provides a convenient API to bootstrap firmware and access peripherals on the Nintendo Alarmo"
+authors = ["RoccoDev <hey@rocco.dev>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/RoccoDev/alarmo-rs"
+
+[dependencies]
+cortex-m = "0.7.5"
+stm32h7xx-hal = { version = "0.16.0", features = ["stm32h735", "fmc"], default-features = false }
+
+[dev-dependencies]
+panic-halt = "1.0.0"
+panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
+
+[build-dependencies]
+cc = "1.0.28"
+bindgen = { version = "0.70.1", features = ["experimental"] }
