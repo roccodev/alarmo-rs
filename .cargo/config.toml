@@ -1,7 +1,7 @@
 [target.thumbv7em-none-eabihf]
 linker = "arm-none-eabi-gcc"
 rustflags = [
-    "-C", "link-args=-nostartfiles -nodefaultlibs -Wl,-Tlink.ld -Wl,--no-warn-rwx-segments -lgcc -mthumb -march=armv7e-m -mtune=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -DSTM32H730xx -O0",
+    "-C", "link-args=-nostartfiles -nodefaultlibs -Wl,-Tlink.ld -Wl,--no-warn-rwx-segments -DSTM32H730xx",
 ]
 
 [build]

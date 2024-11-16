@@ -24,7 +24,8 @@ pub unsafe fn main() {
     // Initialize the display interface. This takes care of hard resetting the display.
     let disp_int = ALARMO.as_mut().unwrap().init_display();
 
-    // Configure the display frontend library
+    // Configure the display frontend library. This example shows `mipidsi`, but you can use
+    // any crate compatible with `display_interface`
     let mut delay = HalDelay;
     let mut disp = mipidsi::Builder::new(ST7789, disp_int)
         // IMPORTANT! Alarmo LCD needs INVON

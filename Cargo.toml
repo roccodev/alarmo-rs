@@ -1,11 +1,14 @@
 [package]
 name = "alarmo"
-version = "0.1.0"
+version = "0.0.1"
 description = "Provides a convenient API to bootstrap firmware and access peripherals on the Nintendo Alarmo"
 authors = ["RoccoDev <hey@rocco.dev>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/RoccoDev/alarmo-rs"
+keywords = ["stm32h7xx", "stm32", "nintendo", "embedded-devices", "cortex-m"]
+categories = ["embedded", "hardware-support", "no-std"]
+exclude = ["/.vscode", "/.github"]
 
 [dependencies]
 cortex-m = "0.7.5"
