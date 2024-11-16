@@ -8,7 +8,15 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/RoccoDev/alarmo-rs"
 keywords = ["stm32h7xx", "stm32", "nintendo", "embedded-devices", "cortex-m"]
 categories = ["embedded", "hardware-support", "no-std"]
-exclude = ["/.vscode", "/.github"]
+exclude = [
+    "/.vscode", 
+    "/.github", 
+    "/STM32CubeH7", 
+    "!/STM32CubeH7/Drivers/STM32H7xx_HAL_Driver/Src",
+    "!/STM32CubeH7/Drivers/CMSIS/Include",
+    "!/STM32CubeH7/Drivers/CMSIS/Device/ST/STM32H7xx/Include",
+    "!/STM32CubeH7/Drivers/STM32H7xx_HAL_Driver/Inc"
+]
 
 [dependencies]
 cortex-m = "0.7.5"
