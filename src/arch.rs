@@ -1,9 +1,4 @@
-use cortex_m::{
-    asm::{dsb, isb},
-    Peripherals,
-};
-
-use crate::hal_sys;
+use cortex_m::Peripherals;
 
 #[inline]
 pub unsafe fn enable_instruction_cache(cortex: &mut Peripherals) {

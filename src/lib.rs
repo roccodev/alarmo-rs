@@ -4,10 +4,15 @@ use hal_sys::{
     FMC_NORSRAM_TimingTypeDef, SRAM_HandleTypeDef, TIM_HandleTypeDef, TIM_MasterConfigTypeDef,
     TIM_OC_InitTypeDef,
 };
+use stm32h7xx_hal::pac::Peripherals;
 
 mod arch;
+mod hal_msp;
 #[allow(warnings)]
 pub mod hal_sys;
+mod interrupt_handlers;
+
+pub(crate) static mut STM_PERIPHERALS: Option<Peripherals> = None;
 
 extern "C" {
     pub fn GaryMain(tim_handle: *const TIM_HandleTypeDef) -> u32;
@@ -21,6 +26,7 @@ pub struct Alarmo {
 impl Alarmo {
     pub unsafe fn init() -> Alarmo {
         let mut cortex = cortex_m::Peripherals::take().unwrap();
+        STM_PERIPHERALS = Peripherals::take();
 
         arch::enable_instruction_cache(&mut cortex);
         arch::enable_data_cache(&mut cortex);
@@ -98,6 +104,6 @@ unsafe fn init_lcd_timers() -> TIM_HandleTypeDef {
         );
     }
 
-    // TODO init gpio  TIMx_PWM_MspInit(&tim3Handle);
+    hal_msp::timer_post_init(&handle);
     handle
 }
