@@ -10,10 +10,14 @@ repository = "https://github.com/RoccoDev/alarmo-rs"
 [dependencies]
 cortex-m = "0.7.5"
 stm32h7xx-hal = { version = "0.16.0", features = ["stm32h735", "fmc"], default-features = false }
+display-interface = "0.5.0" # TODO: feature flag
+embedded-hal = "1.0"
 
 [dev-dependencies]
 panic-halt = "1.0.0"
 panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
+mipidsi = "0.8.0"
+embedded-graphics = "0.8.1"
 
 [build-dependencies]
 cc = "1.0.28"

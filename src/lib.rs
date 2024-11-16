@@ -1,32 +1,30 @@
 #![no_std]
 
+use display::AlarmoDisplayInterface;
 use hal_sys::{
     FMC_NORSRAM_TimingTypeDef, SRAM_HandleTypeDef, TIM_HandleTypeDef, TIM_MasterConfigTypeDef,
     TIM_OC_InitTypeDef,
 };
-use stm32h7xx_hal::pac::Peripherals;
+use stm32h7xx_hal::pac::Peripherals as Stm32Peripherals;
 
 mod arch;
+pub mod display;
 mod hal_msp;
 #[allow(warnings)]
 pub mod hal_sys;
 mod interrupt_handlers;
 
-pub(crate) static mut STM_PERIPHERALS: Option<Peripherals> = None;
-
-extern "C" {
-    pub fn GaryMain(tim_handle: *const TIM_HandleTypeDef) -> u32;
-}
+pub(crate) static mut STM_PERIPHERALS: Option<Stm32Peripherals> = None;
 
 pub struct Alarmo {
     sram_handle: SRAM_HandleTypeDef,
-    pub tim3_handle: TIM_HandleTypeDef,
+    tim3_handle: TIM_HandleTypeDef,
 }
 
 impl Alarmo {
     pub unsafe fn init() -> Alarmo {
         let mut cortex = cortex_m::Peripherals::take().unwrap();
-        STM_PERIPHERALS = Peripherals::take();
+        STM_PERIPHERALS = Stm32Peripherals::take();
 
         arch::enable_instruction_cache(&mut cortex);
         arch::enable_data_cache(&mut cortex);
@@ -40,6 +38,10 @@ impl Alarmo {
             sram_handle,
             tim3_handle,
         }
+    }
+
+    pub unsafe fn init_display(&mut self) -> AlarmoDisplayInterface {
+        AlarmoDisplayInterface::init(&mut self.tim3_handle)
     }
 }
 

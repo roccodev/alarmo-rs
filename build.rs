@@ -46,9 +46,6 @@ fn main() {
             "STM32CubeH7/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_tim.c",
             "STM32CubeH7/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c",
             "vendor/guard.c",
-            "vendor/gary/lcd.c",
-            "vendor/gary/main.c",
-            "vendor/gary/string.c",
             "vendor/startup_stm32h730xx.s",
         ])
         .includes([
@@ -56,7 +53,6 @@ fn main() {
             "STM32CubeH7/Drivers/CMSIS/Device/ST/STM32H7xx/Include",
             "STM32CubeH7/Drivers/STM32H7xx_HAL_Driver/Inc",
             "vendor",
-            "vendor/gary",
         ])
         .flag("-DSTM32H730xx")
         .flag("-mthumb")
