@@ -1,10 +1,12 @@
 # Rust on Alarmo!
+[![Crates.io Version](https://img.shields.io/crates/v/alarmo)](https://crates.io/crates/alarmo)
+[![docs.rs (with version)](https://img.shields.io/docsrs/alarmo/latest)](https://docs.rs/alarmo)
 
 This project provides a convenient API to bootstrap firmware and access peripherals on the Nintendo Alarmo, using Rust.
 
 ## Status
 
-This started as a Rust port of GaryOderNichts's MIT-licensed [alarmo](https://github.com/GaryOderNichts/alarmo) repository, which uses the [official hardware abstraction layer](https://github.com/STMicroelectronics/STM32CubeH7). As a proof-of-concept, I first made a Rust loader that would just call GaryOderNicht's implementation, then I incrementally rewrote each part in the Rust module.
+This started as a Rust port of GaryOderNichts's MIT-licensed [alarmo](https://github.com/GaryOderNichts/alarmo) repository, which uses the [official hardware abstraction layer](https://github.com/STMicroelectronics/STM32CubeH7). As a proof-of-concept, I first made a Rust loader that would just call GaryOderNichts's implementation, then I incrementally rewrote each part in the Rust module.
 
 Consider this list of goals tentative:
 
@@ -23,8 +25,9 @@ As a general goal, I'd like to use Rust-native HALs (e.g. [stm32h7xx-hal](https:
 ### Running an example
 
 1. Compile the example, for example `lcd`:
-```
-cargo build --example lcd
+```sh
+# "--features display" required to build the LCD example
+cargo build --example lcd --features display
 ```
 2. Convert the example ELF into BINF:
 ```

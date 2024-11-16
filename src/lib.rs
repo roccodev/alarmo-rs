@@ -1,6 +1,5 @@
 #![no_std]
 
-use display::AlarmoDisplayInterface;
 use hal_sys::{
     FMC_NORSRAM_TimingTypeDef, SRAM_HandleTypeDef, TIM_HandleTypeDef, TIM_MasterConfigTypeDef,
     TIM_OC_InitTypeDef,
@@ -8,11 +7,13 @@ use hal_sys::{
 use stm32h7xx_hal::pac::Peripherals as Stm32Peripherals;
 
 mod arch;
-pub mod display;
 mod hal_msp;
 #[allow(warnings)]
 pub mod hal_sys;
 mod interrupt_handlers;
+
+#[cfg(feature = "display")]
+pub mod display;
 
 pub(crate) static mut STM_PERIPHERALS: Option<Stm32Peripherals> = None;
 
@@ -40,8 +41,9 @@ impl Alarmo {
         }
     }
 
-    pub unsafe fn init_display(&mut self) -> AlarmoDisplayInterface {
-        AlarmoDisplayInterface::init(&mut self.tim3_handle)
+    #[cfg(feature = "display")]
+    pub unsafe fn init_display(&mut self) -> display::AlarmoDisplayInterface {
+        display::AlarmoDisplayInterface::init(&mut self.tim3_handle)
     }
 }
 
