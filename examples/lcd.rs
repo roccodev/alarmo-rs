@@ -15,14 +15,12 @@ use mipidsi::{
 };
 use panic_halt as _;
 
-static mut ALARMO: Option<Alarmo> = None;
-
 #[no_mangle]
 pub unsafe fn main() {
-    ALARMO = Some(Alarmo::init());
+    let alarmo = Alarmo::init();
 
     // Initialize the display interface. This takes care of hard resetting the display.
-    let disp_int = ALARMO.as_mut().unwrap().init_display();
+    let disp_int = alarmo.init_display();
 
     // Configure the display frontend library. This example shows `mipidsi`, but you can use
     // any crate compatible with `display_interface`

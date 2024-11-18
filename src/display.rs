@@ -1,9 +1,10 @@
 //! Provides a display interface (see crate [`display_interface`]) to send data and commands
 //! to the LCD on the Alarmo.
 
-use crate::hal_sys;
+use crate::{hal_sys, pac::timers::Timers};
 use display_interface::{DataFormat, DisplayError, WriteOnlyDataCommand};
 use embedded_hal::delay::DelayNs;
+use stm32h7xx_hal::prelude::_embedded_hal_PwmPin;
 
 const BASE: usize = 0xc0000000;
 const RS_PIN: u8 = 6;
@@ -12,16 +13,14 @@ const DATA8_PTR: *mut u8 = (BASE + (1 << (RS_PIN + 1))) as *mut u8;
 const DATA16_PTR: *mut u16 = (BASE + (1 << (RS_PIN + 1))) as *mut u16;
 
 pub struct AlarmoDisplayInterface<'a> {
-    tim_handle: &'a mut hal_sys::TIM_HandleTypeDef,
+    timers: &'a mut Timers,
 }
 
 pub struct HalDelay;
 
 impl<'a> AlarmoDisplayInterface<'a> {
-    pub(crate) unsafe fn init(
-        tim_handle: &'a mut hal_sys::TIM_HandleTypeDef,
-    ) -> AlarmoDisplayInterface<'a> {
-        let display = AlarmoDisplayInterface { tim_handle };
+    pub(crate) unsafe fn init(timers: &'a mut Timers) -> AlarmoDisplayInterface<'a> {
+        let display = AlarmoDisplayInterface { timers };
         display.pin_select(false);
 
         // Hard reset the display
@@ -46,12 +45,9 @@ impl<'a> AlarmoDisplayInterface<'a> {
             brightness <= 1.0 && brightness >= 0.0,
             "brightness [0.0, 1.0]"
         );
-        // TODO: doc safety
-        unsafe {
-            let period = (*self.tim_handle).Init.Period;
-            (*(*self.tim_handle).Instance).CCR4 = (brightness * period as f32) as u32;
-            hal_sys::HAL_TIM_PWM_Start(self.tim_handle as *mut _, hal_sys::TIM_CHANNEL_4);
-        }
+        self.timers
+            .tim3_ch4
+            .set_duty((self.timers.tim3_ch4.get_max_duty() as f32 * brightness) as u16);
     }
 
     unsafe fn pin_select(&self, select: bool) {

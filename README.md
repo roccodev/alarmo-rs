@@ -15,7 +15,7 @@ Consider this list of goals tentative:
 - [ ] Better build environment (automate `objcopy` and firmware signing)
 - [ ] Button inputs
 - [ ] Dial input
-- [ ] Dial LED
+- [x] Dial LED
 - [ ] Allocator with extended RAM
 
 As a general goal, I'd like to use Rust-native HALs (e.g. [stm32h7xx-hal](https://crates.io/crates/stm32h7xx-hal)) whenever possible. In its current state, the project still depends on the official HAL, for which it generates bindings using `bindgen`.

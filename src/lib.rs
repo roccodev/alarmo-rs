@@ -1,49 +1,89 @@
 #![no_std]
 
-use hal_sys::{
-    FMC_NORSRAM_TimingTypeDef, SRAM_HandleTypeDef, TIM_HandleTypeDef, TIM_MasterConfigTypeDef,
-    TIM_OC_InitTypeDef,
+use dial::Dial;
+use hal_sys::{FMC_NORSRAM_TimingTypeDef, SRAM_HandleTypeDef};
+use pac::timers::Timers;
+use stm32h7xx_hal::{
+    delay::Delay,
+    gpio::GpioExt,
+    pac::Peripherals as Stm32Peripherals,
+    pwr::PwrExt,
+    rcc::{CoreClocks, RccExt, ResetEnable},
 };
-use stm32h7xx_hal::pac::Peripherals as Stm32Peripherals;
 
 mod arch;
+pub mod dial;
 mod hal_msp;
 #[allow(warnings)]
 pub mod hal_sys;
 mod interrupt_handlers;
+mod pac;
 
 #[cfg(feature = "display")]
 pub mod display;
 
-pub(crate) static mut STM_PERIPHERALS: Option<Stm32Peripherals> = None;
+static mut ALARMO: Option<Alarmo> = None;
 
 pub struct Alarmo {
+    pub clocks: CoreClocks,
+    pub delay: Delay,
+
     sram_handle: SRAM_HandleTypeDef,
-    tim3_handle: TIM_HandleTypeDef,
+    timers: Timers,
 }
 
 impl Alarmo {
-    pub unsafe fn init() -> Alarmo {
+    pub unsafe fn init() -> &'static mut Alarmo {
         let mut cortex = cortex_m::Peripherals::take().unwrap();
-        STM_PERIPHERALS = Stm32Peripherals::take();
 
         arch::enable_instruction_cache(&mut cortex);
         arch::enable_data_cache(&mut cortex);
         arch::enable_interrupts();
         hal_sys::HAL_Init();
 
-        let sram_handle = init_sram();
-        let tim3_handle = init_lcd_timers();
+        let peripherals = Stm32Peripherals::take().unwrap();
+        let pwr = peripherals.PWR.constrain();
+        let pwr_cfg = pwr.freeze();
+        let rcc = peripherals.RCC.constrain();
+        let ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
 
-        Alarmo {
+        // Split timers
+        let timers = Timers::new(
+            &ccdr.clocks,
+            peripherals.TIM1,
+            peripherals.TIM3,
+            peripherals.GPIOA.split(ccdr.peripheral.GPIOA),
+            peripherals.GPIOB.split(ccdr.peripheral.GPIOB),
+            peripherals.GPIOC.split(ccdr.peripheral.GPIOC),
+            ccdr.peripheral.TIM1,
+            ccdr.peripheral.TIM3,
+        );
+
+        let sram_handle = init_sram();
+        // Enable the FMC clocks for SRAM
+        ccdr.peripheral
+            .FMC
+            .kernel_clk_mux(stm32h7xx_hal::pac::rcc::d1ccipr::FMCSEL_A::Per)
+            .enable();
+
+        ALARMO = Some(Alarmo {
+            delay: Delay::new(cortex.SYST, ccdr.clocks),
+            clocks: ccdr.clocks,
             sram_handle,
-            tim3_handle,
+            timers,
+        });
+        ALARMO.as_mut().unwrap()
+    }
+
+    pub fn dial(&mut self) -> Dial {
+        Dial {
+            timers: &mut self.timers,
         }
     }
 
     #[cfg(feature = "display")]
     pub unsafe fn init_display(&mut self) -> display::AlarmoDisplayInterface {
-        display::AlarmoDisplayInterface::init(&mut self.tim3_handle)
+        display::AlarmoDisplayInterface::init(&mut self.timers)
     }
 }
 
@@ -75,39 +115,4 @@ unsafe fn init_sram() -> SRAM_HandleTypeDef {
     );
     hal_sys::HAL_SetFMCMemorySwappingConfig(hal_sys::FMC_SWAPBMAP_SDRAM_SRAM);
     sram_handle
-}
-
-unsafe fn init_lcd_timers() -> TIM_HandleTypeDef {
-    let mut handle = TIM_HandleTypeDef::default();
-    handle.Instance = hal_sys::TIM3_BASE as *mut _;
-    handle.Init.AutoReloadPreload = hal_sys::TIM_AUTORELOAD_PRELOAD_DISABLE;
-    handle.Init.Prescaler = 0;
-    handle.Init.CounterMode = hal_sys::TIM_COUNTERMODE_UP;
-    handle.Init.Period = u16::MAX.into();
-    handle.Init.ClockDivision = hal_sys::TIM_CLOCKDIVISION_DIV1;
-    assert!(hal_sys::HAL_TIM_PWM_Init(&raw mut handle) == hal_sys::HAL_StatusTypeDef_HAL_OK);
-
-    let mut master_cfg = TIM_MasterConfigTypeDef::default();
-    master_cfg.MasterSlaveMode = hal_sys::TIM_MASTERSLAVEMODE_DISABLE;
-    master_cfg.MasterOutputTrigger = hal_sys::TIM_TRGO_RESET;
-    assert!(
-        hal_sys::HAL_TIMEx_MasterConfigSynchronization(&raw mut handle, &raw const master_cfg)
-            == hal_sys::HAL_StatusTypeDef_HAL_OK
-    );
-
-    let mut channel_cfg = TIM_OC_InitTypeDef::default();
-    channel_cfg.OCFastMode = hal_sys::TIM_OCFAST_DISABLE;
-    channel_cfg.Pulse = 0;
-    channel_cfg.OCPolarity = hal_sys::TIM_OCPOLARITY_HIGH;
-    channel_cfg.OCMode = hal_sys::TIM_OCMODE_PWM1;
-
-    for ch in [hal_sys::TIM_CHANNEL_3, hal_sys::TIM_CHANNEL_4] {
-        assert!(
-            hal_sys::HAL_TIM_PWM_ConfigChannel(&raw mut handle, &raw const channel_cfg, ch)
-                == hal_sys::HAL_StatusTypeDef_HAL_OK
-        );
-    }
-
-    hal_msp::timer_post_init(&handle);
-    handle
 }
