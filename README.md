@@ -8,6 +8,8 @@ This project provides a convenient API to bootstrap firmware and access peripher
 
 This started as a Rust port of GaryOderNichts's MIT-licensed [alarmo](https://github.com/GaryOderNichts/alarmo) repository, which uses the [official hardware abstraction layer](https://github.com/STMicroelectronics/STM32CubeH7). As a proof-of-concept, I first made a Rust loader that would just call GaryOderNichts's implementation, then I incrementally rewrote each part in the Rust module.
 
+In its current state, the project no longer relies on the official HAL.
+
 Consider this list of goals tentative:
 
 - [x] It works!
@@ -17,8 +19,6 @@ Consider this list of goals tentative:
 - [ ] Dial input
 - [x] Dial LED
 - [ ] Allocator with extended RAM
-
-As a general goal, I'd like to use Rust-native HALs (e.g. [stm32h7xx-hal](https://crates.io/crates/stm32h7xx-hal)) whenever possible. In its current state, the project still depends on the official HAL, for which it generates bindings using `bindgen`.
 
 ## Usage
 
@@ -61,7 +61,7 @@ arm-none-eabi-objcopy target/thumbv7em-none-eabihf/debug/your_crate your_crate.b
 3. Sign the firmware to get the `a.bin`.
 
 ## License
-The library and its examples are dual-licensed under both [Apache-2.0](LICENSE-APACHE) and [MIT](LICENSE-MIT). Please also refer to the [license documentation](https://github.com/STMicroelectronics/STM32CubeH7/blob/master/LICENSE.md) for the official HAL.
+The library and its examples are dual-licensed under both [Apache-2.0](LICENSE-APACHE) and [MIT](LICENSE-MIT).
 
 ## Credits
 * [GaryOderNichts](https://github.com/GaryOderNichts/), whose [project](https://github.com/GaryOderNichts/alarmo) this repository is derived from, and for their [blog post](https://garyodernichts.blogspot.com/2024/10/looking-into-nintendo-alarmo.html) exploring the Alarmo.

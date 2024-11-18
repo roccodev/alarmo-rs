@@ -1,5 +1,7 @@
 #![no_std]
 
+use core::arch::global_asm;
+
 use dial::Dial;
 use display::SelectPin;
 use pac::timers::Timers;
@@ -16,6 +18,10 @@ pub mod dial;
 mod hal_sys;
 mod interrupt_handlers;
 mod pac;
+
+// Include startup code
+#[cfg(target_arch = "arm")]
+global_asm!(core::include_str!("../vendor/startup_stm32h730xx.s"));
 
 #[cfg(feature = "display")]
 pub mod display;
