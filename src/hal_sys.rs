@@ -1,13 +1,46 @@
-core::include!(core::concat!(core::env!("OUT_DIR"), "/bindings.rs"));
+#![deny(unused)]
+#![allow(non_snake_case, non_upper_case_globals)]
 
-/// Convenient wrapper for [`HAL_GPIO_Init`].
-///
-/// ## Safety
-/// `gpio_base` must be one of the `GPIOx_BASE` constants.
-pub unsafe fn gpio_init(gpio_base: u32, def: GPIO_InitTypeDef) {
-    HAL_GPIO_Init(gpio_base as *mut _, &raw const def);
-}
-
-pub const fn gpio_pin(pin: u8) -> u16 {
-    1 << pin
-}
+pub const GPIO_SPEED_FREQ_MEDIUM: u32 = 1;
+pub const MODE_AF: u32 = 2;
+pub const FMC_DATA_ADDRESS_MUX_DISABLE: u32 = 0;
+pub const FMC_MEMORY_TYPE_SRAM: u32 = 0;
+pub const FMC_NORSRAM_MEM_BUS_WIDTH_16: u32 = 16;
+pub const FMC_NORSRAM_FLASH_ACCESS_ENABLE: u32 = 64;
+pub const FMC_BURST_ACCESS_MODE_DISABLE: u32 = 0;
+pub const FMC_WAIT_SIGNAL_POLARITY_LOW: u32 = 0;
+pub const FMC_WRITE_OPERATION_ENABLE: u32 = 4096;
+pub const FMC_ACCESS_MODE_A: u32 = 0;
+pub const FMC_BCR1_CCLKEN: u32 = 1048576;
+pub const FMC_BCR1_WFDIS: u32 = 2097152;
+pub const FMC_BCR1_BMAP_Pos: u32 = 24;
+pub const FMC_BCRx_MBKEN: u32 = 1;
+pub const FMC_BCRx_MUXEN: u32 = 2;
+pub const FMC_BCRx_MTYP: u32 = 12;
+pub const FMC_BCRx_MWID: u32 = 48;
+pub const FMC_BCRx_FACCEN: u32 = 64;
+pub const FMC_BCRx_BURSTEN: u32 = 256;
+pub const FMC_BCRx_WAITPOL: u32 = 512;
+pub const FMC_BCRx_WAITCFG: u32 = 2048;
+pub const FMC_BCRx_WREN: u32 = 4096;
+pub const FMC_BCRx_WAITEN: u32 = 8192;
+pub const FMC_BCRx_EXTMOD: u32 = 16384;
+pub const FMC_BCRx_ASYNCWAIT: u32 = 32768;
+pub const FMC_BCRx_CPSIZE: u32 = 458752;
+pub const FMC_BCRx_CBURSTRW: u32 = 524288;
+pub const FMC_BTRx_ADDSET_Pos: u32 = 0;
+pub const FMC_BTRx_ADDHLD_Pos: u32 = 4;
+pub const FMC_BTRx_DATAST_Pos: u32 = 8;
+pub const FMC_BTRx_BUSTURN_Pos: u32 = 16;
+pub const FMC_BTRx_CLKDIV_Pos: u32 = 20;
+pub const FMC_BTRx_DATLAT_Pos: u32 = 24;
+pub const FMC_BWTRx_ADDSET_Pos: u32 = 0;
+pub const FMC_BWTRx_ADDSET: u32 = 15;
+pub const FMC_BWTRx_ADDHLD_Pos: u32 = 4;
+pub const FMC_BWTRx_ADDHLD: u32 = 240;
+pub const FMC_BWTRx_DATAST_Pos: u32 = 8;
+pub const FMC_BWTRx_DATAST: u32 = 65280;
+pub const FMC_BWTRx_BUSTURN_Pos: u32 = 16;
+pub const FMC_BWTRx_BUSTURN: u32 = 983040;
+pub const FMC_BWTRx_ACCMOD: u32 = 805306368;
+pub const FMC_SWAPBMAP_SDRAM_SRAM: u32 = 16777216;

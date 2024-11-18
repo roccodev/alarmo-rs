@@ -1,11 +1,7 @@
 //! Interrupt handlers exported for access by the startup/linker layout script
 
-use crate::hal_sys;
-
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn SysTick_Handler() {
-    hal_sys::HAL_IncTick();
-}
+pub unsafe extern "C" fn SysTick_Handler() {}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn NMI_Handler() {}

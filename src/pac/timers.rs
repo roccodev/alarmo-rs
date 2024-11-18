@@ -1,5 +1,5 @@
 use stm32h7xx_hal::{
-    gpio::{gpioa, gpiob, gpioc},
+    gpio::Pin,
     pac::{TIM1, TIM3},
     pwm::{ComplementaryDisabled, ComplementaryImpossible, Pwm, PwmAdvExt},
     rcc::{
@@ -25,16 +25,17 @@ impl Timers {
         core_clocks: &CoreClocks,
         tim1: TIM1,
         tim3: TIM3,
-        gpioa: gpioa::Parts,
-        gpiob: gpiob::Parts,
-        gpioc: gpioc::Parts,
+        pa8: Pin<'A', 8>,
+        pa10: Pin<'A', 10>,
+        pb1: Pin<'B', 1>,
+        pc8: Pin<'C', 8>,
         ccdr_tim1: Tim1,
         ccdr_tim3: Tim3,
     ) -> Timers {
         // Dial LED timers
         let (_, (t1c1, t1c3)) = tim1
             .pwm_advanced(
-                (gpioa.pa8.into_alternate(), gpioa.pa10.into_alternate()),
+                (pa8.into_alternate(), pa10.into_alternate()),
                 ccdr_tim1,
                 core_clocks,
             )
@@ -45,7 +46,7 @@ impl Timers {
         // also includes LCD backlight timer
         let (_, (t3c3, t3c4)) = tim3
             .pwm_advanced(
-                (gpiob.pb1.into_alternate(), gpioc.pc8.into_alternate()),
+                (pb1.into_alternate(), pc8.into_alternate()),
                 ccdr_tim3,
                 core_clocks,
             )

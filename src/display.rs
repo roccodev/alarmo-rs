@@ -1,10 +1,13 @@
 //! Provides a display interface (see crate [`display_interface`]) to send data and commands
 //! to the LCD on the Alarmo.
 
-use crate::{hal_sys, pac::timers::Timers};
+use crate::{pac::timers::Timers, ALARMO};
 use display_interface::{DataFormat, DisplayError, WriteOnlyDataCommand};
 use embedded_hal::delay::DelayNs;
-use stm32h7xx_hal::prelude::_embedded_hal_PwmPin;
+use stm32h7xx_hal::{
+    gpio::{Output, Pin, PushPull},
+    prelude::_embedded_hal_PwmPin,
+};
 
 const BASE: usize = 0xc0000000;
 const RS_PIN: u8 = 6;
@@ -12,28 +15,28 @@ const COMMAND_PTR: *mut u8 = BASE as *mut u8;
 const DATA8_PTR: *mut u8 = (BASE + (1 << (RS_PIN + 1))) as *mut u8;
 const DATA16_PTR: *mut u16 = (BASE + (1 << (RS_PIN + 1))) as *mut u16;
 
+pub(crate) type SelectPin = Pin<'C', 7, Output<PushPull>>;
+
 pub struct AlarmoDisplayInterface<'a> {
     timers: &'a mut Timers,
+    select_pin: SelectPin,
 }
 
 pub struct HalDelay;
 
 impl<'a> AlarmoDisplayInterface<'a> {
-    pub(crate) unsafe fn init(timers: &'a mut Timers) -> AlarmoDisplayInterface<'a> {
-        let display = AlarmoDisplayInterface { timers };
+    pub(crate) fn init(
+        timers: &'a mut Timers,
+        reset_pin: Pin<'G', 4>,
+        select_pin: SelectPin,
+    ) -> AlarmoDisplayInterface<'a> {
+        let mut display = AlarmoDisplayInterface { timers, select_pin };
         display.pin_select(false);
 
         // Hard reset the display
-        hal_sys::HAL_GPIO_WritePin(
-            hal_sys::GPIOG_BASE as *mut _,
-            hal_sys::gpio_pin(4),
-            hal_sys::GPIO_PinState_GPIO_PIN_RESET,
-        );
-        hal_sys::HAL_GPIO_WritePin(
-            hal_sys::GPIOG_BASE as *mut _,
-            hal_sys::gpio_pin(4),
-            hal_sys::GPIO_PinState_GPIO_PIN_SET,
-        );
+        let mut reset_pin = reset_pin.into_push_pull_output();
+        reset_pin.set_low();
+        reset_pin.set_high();
 
         HalDelay.delay_ms(120);
 
@@ -48,18 +51,15 @@ impl<'a> AlarmoDisplayInterface<'a> {
         self.timers
             .tim3_ch4
             .set_duty((self.timers.tim3_ch4.get_max_duty() as f32 * brightness) as u16);
+        self.timers.tim3_ch4.enable();
     }
 
-    unsafe fn pin_select(&self, select: bool) {
-        hal_sys::HAL_GPIO_WritePin(
-            hal_sys::GPIOC_BASE as *mut _,
-            hal_sys::gpio_pin(7),
-            if select {
-                hal_sys::GPIO_PinState_GPIO_PIN_RESET
-            } else {
-                hal_sys::GPIO_PinState_GPIO_PIN_SET
-            },
-        );
+    fn pin_select(&mut self, select: bool) {
+        if select {
+            self.select_pin.set_low();
+        } else {
+            self.select_pin.set_high();
+        }
     }
 }
 
@@ -104,12 +104,13 @@ impl<'a> WriteOnlyDataCommand for AlarmoDisplayInterface<'a> {
 impl DelayNs for HalDelay {
     #[inline]
     fn delay_ns(&mut self, ns: u32) {
-        unsafe { hal_sys::HAL_Delay(ns / 1_000_000) };
+        self.delay_ms(ns / 1_000_000);
     }
 
     #[inline]
     fn delay_ms(&mut self, ms: u32) {
-        unsafe { hal_sys::HAL_Delay(ms) };
+        use stm32h7xx_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+        unsafe { ALARMO.as_mut().unwrap().delay.delay_ms(ms) };
     }
 
     #[inline]
