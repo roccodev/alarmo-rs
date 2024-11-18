@@ -3,7 +3,6 @@
 use core::arch::global_asm;
 
 use dial::Dial;
-use display::SelectPin;
 use pac::timers::Timers;
 use stm32h7xx_hal::{
     delay::Delay,
@@ -33,7 +32,8 @@ pub struct Alarmo {
     pub delay: Delay,
 
     timers: Timers,
-    display_pins: Option<(Pin<'G', 4>, SelectPin)>,
+    #[cfg(feature = "display")]
+    display_pins: Option<(Pin<'G', 4>, display::SelectPin)>,
 }
 
 impl Alarmo {
@@ -81,6 +81,7 @@ impl Alarmo {
             delay: Delay::new(cortex.SYST, ccdr.clocks),
             clocks: ccdr.clocks,
             timers,
+            #[cfg(feature = "display")]
             display_pins: Some((gpiog.pg4, disp_pin)),
         });
         ALARMO.as_mut().unwrap()
