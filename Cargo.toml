@@ -1,6 +1,6 @@
 [package]
 name = "alarmo"
-version = "0.0.1"
+version = "0.0.2"
 description = "Provides a convenient API to bootstrap firmware and access peripherals on the Nintendo Alarmo"
 authors = ["RoccoDev <hey@rocco.dev>"]
 edition = "2021"
