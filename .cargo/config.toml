@@ -1,8 +1,2 @@
-[target.thumbv7em-none-eabihf]
-linker = "arm-none-eabi-gcc"
-rustflags = [
-    "-C", "link-args=-nostartfiles -nodefaultlibs -Wl,-Tlink.ld -Wl,--no-warn-rwx-segments -DSTM32H730xx",
-]
-
 [build]
 target = "thumbv7em-none-eabihf"

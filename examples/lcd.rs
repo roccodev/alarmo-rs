@@ -2,6 +2,7 @@
 #![no_main]
 
 use alarmo::{display::HalDelay, Alarmo};
+use cortex_m_rt::entry;
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyle},
     pixelcolor::Rgb565,
@@ -17,8 +18,8 @@ use mipidsi::{
 // A panic handler is required
 use panic_halt as _;
 
-#[no_mangle]
-pub fn main() {
+#[entry]
+fn main() -> ! {
     let mut alarmo = unsafe { Alarmo::init() };
 
     // Hard reset the display

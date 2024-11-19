@@ -2,13 +2,14 @@
 #![no_main]
 
 use alarmo::Alarmo;
+use cortex_m_rt::entry;
 use stm32h7xx_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
 // A panic handler is required
 use panic_halt as _;
 
-#[no_mangle]
-pub fn main() {
+#[entry]
+fn main() -> ! {
     let mut alarmo = unsafe { Alarmo::init() };
 
     // Turn the lights on

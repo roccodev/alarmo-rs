@@ -1,12 +1,11 @@
 #![doc =  include_str!("../README.md")]
 #![no_std]
 
-use core::arch::global_asm;
-use core::cell::{OnceCell, RefCell};
+use core::cell::RefCell;
 use dial::Dial;
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{GpioExt, Pin},
+    gpio::GpioExt,
     pac::Peripherals as Stm32Peripherals,
     pwr::PwrExt,
     rcc::{CoreClocks, RccExt, ResetEnable},
@@ -15,12 +14,7 @@ use stm32h7xx_hal::{
 mod arch;
 pub mod dial;
 mod hal_sys;
-mod interrupt_handlers;
 mod pac;
-
-// Include startup code
-#[cfg(target_arch = "arm")]
-global_asm!(core::include_str!("../vendor/startup_stm32h730xx.s"));
 
 #[cfg(feature = "display")]
 pub mod display;

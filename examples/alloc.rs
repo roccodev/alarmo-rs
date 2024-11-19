@@ -12,6 +12,7 @@ use alarmo::display::{AlarmoDisplay, HalDelay};
 use alarmo::Alarmo;
 
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use cortex_m_rt::entry;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::mono_font::MonoTextStyle;
@@ -28,8 +29,8 @@ use panic_halt as _;
 
 struct TestDisplay(Display<AlarmoDisplay, ST7789, NoResetPin>);
 
-#[no_mangle]
-pub fn main() {
+#[entry]
+fn main() -> ! {
     let alarmo = unsafe { Alarmo::init() };
 
     let mut test_vec = vec![0usize; 1];
@@ -37,12 +38,11 @@ pub fn main() {
 
     loop {
         // Count from 1 to 100, printing all numbers.
-        if test_vec.len() == 100 {
-            break;
+        if test_vec.len() < 100 {
+            test_vec.push(test_vec.len());
+            display.write(&test_vec);
+            alarmo.delay.borrow_mut().delay_ms(1000_u16);
         }
-        test_vec.push(test_vec.len());
-        display.write(&test_vec);
-        alarmo.delay.borrow_mut().delay_ms(1000_u16);
     }
 }
 
