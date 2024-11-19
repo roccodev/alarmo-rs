@@ -2,15 +2,17 @@
 #![no_main]
 
 use alarmo::Alarmo;
-use panic_halt as _;
 use stm32h7xx_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
+// A panic handler is required
+use panic_halt as _;
+
 #[no_mangle]
-pub unsafe fn main() {
-    let alarmo = Alarmo::init();
+pub fn main() {
+    let mut alarmo = unsafe { Alarmo::init() };
 
     // Turn the lights on
-    alarmo.dial().lights_on();
+    alarmo.dial.lights_on();
 
     let mut steps = 0;
 
@@ -20,14 +22,14 @@ pub unsafe fn main() {
 
             // Rainbow wave with 10 steps
             let (r, g, b) = hsv_to_rgb(0.1 * steps as f32, 1.0, 1.0);
-            alarmo.dial().set_color(r, g, b);
+            alarmo.dial.set_color(r, g, b);
         } else {
             // After 10 steps, turn the light off
-            alarmo.dial().lights_off();
+            alarmo.dial.lights_off();
         }
 
         // Wait a second before changing color
-        alarmo.delay.delay_ms(1000_u16);
+        alarmo.delay.borrow_mut().delay_ms(1000_u16);
     }
 }
 

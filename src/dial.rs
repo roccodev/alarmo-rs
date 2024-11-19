@@ -1,11 +1,20 @@
-use crate::pac::timers::Timers;
+//! Dial peripheral, used for input and LED
+
+use crate::pac::timers::DialTimers;
 use stm32h7xx_hal::prelude::_embedded_hal_PwmPin;
 
-pub struct Dial<'a> {
-    pub(crate) timers: &'a mut Timers,
+/// Dial peripheral, found at the top of the device.
+///
+/// This interface currently allows controlling the dial LED.
+///
+/// See the [Dial LED example] for a working implementation.
+///
+/// [Dial LED example]: https://github.com/roccodev/alarmo-rs/blob/master/examples/dial_led.rs
+pub struct Dial {
+    pub(crate) timers: DialTimers,
 }
 
-impl<'a> Dial<'a> {
+impl Dial {
     /// Turns the lights on, making sure the respective timers are running.
     pub fn lights_on(&mut self) {
         self.timers.tim1_ch1.enable();

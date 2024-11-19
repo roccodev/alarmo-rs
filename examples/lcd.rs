@@ -13,19 +13,21 @@ use mipidsi::{
     options::{ColorInversion, Orientation},
     TestImage,
 };
+
+// A panic handler is required
 use panic_halt as _;
 
 #[no_mangle]
-pub unsafe fn main() {
-    let alarmo = Alarmo::init();
+pub fn main() {
+    let mut alarmo = unsafe { Alarmo::init() };
 
-    // Initialize the display interface. This takes care of hard resetting the display.
-    let disp_int = alarmo.init_display();
+    // Hard reset the display
+    alarmo.display.hard_reset();
 
     // Configure the display frontend library. This example shows `mipidsi`, but you can use
     // any crate compatible with `display_interface`
     let mut delay = HalDelay;
-    let mut disp = mipidsi::Builder::new(ST7789, disp_int)
+    let mut disp = mipidsi::Builder::new(ST7789, alarmo.display)
         // IMPORTANT! Alarmo LCD needs INVON
         .invert_colors(ColorInversion::Inverted)
         // IMPORTANT! The frame buffer is 240x320, for a horizontal picture it needs to be rotated
@@ -38,7 +40,9 @@ pub unsafe fn main() {
         .unwrap();
 
     // IMPORTANT! Display has no backlight by default, so you won't see anything unless you add one.
-    disp.dcs().di.set_backlight(1.0);
+    // Getting back to the display interface is safe here as the backlight does not interfere with
+    // the display state.
+    unsafe { disp.dcs() }.di.set_backlight(1.0);
 
     // Display test image, see https://docs.rs/mipidsi/latest/mipidsi/struct.TestImage.html
     TestImage::new().draw(&mut disp).unwrap();

@@ -1,9 +1,9 @@
+#![doc =  include_str!("../README.md")]
 #![no_std]
 
 use core::arch::global_asm;
-
+use core::cell::{OnceCell, RefCell};
 use dial::Dial;
-use pac::timers::Timers;
 use stm32h7xx_hal::{
     delay::Delay,
     gpio::{GpioExt, Pin},
@@ -25,19 +25,59 @@ global_asm!(core::include_str!("../vendor/startup_stm32h730xx.s"));
 #[cfg(feature = "display")]
 pub mod display;
 
-static mut ALARMO: Option<Alarmo> = None;
+#[cfg(feature = "alloc")]
+mod e_alloc;
 
+static mut DELAY: Option<RefCell<Delay>> = None;
+
+/// Singleton that allows access to the Alarmo's peripherals.
+///
+/// Downstream binaries must get an instance of this struct by running
+/// ```
+/// # use alarmo::Alarmo;
+///
+/// // Only safe if it's the first function called by main
+/// let alarmo = unsafe { Alarmo::init() }; // or .init_with_options(...)
+/// ```
+/// as the first instruction in the `main` function.
+///
+/// Peripherals are accessed through public fields, allowing for more flexible lifetime constraints.
 pub struct Alarmo {
     pub clocks: CoreClocks,
-    pub delay: Delay,
-
-    timers: Timers,
+    pub delay: &'static RefCell<Delay>,
+    pub dial: Dial,
     #[cfg(feature = "display")]
-    display_pins: Option<(Pin<'G', 4>, display::SelectPin)>,
+    pub display: display::AlarmoDisplay,
+}
+
+pub struct AlarmoOptions {
+    #[cfg(feature = "alloc")]
+    /// The size of the heap in bytes, determines the start address.
+    /// The heap is placed in external RAM (OCTOSPI2), so the maximum theoretical size is 32 MiB.
+    ///
+    /// However, the program text is also stored in that memory region. The current default is a
+    /// safe estimate for most programs, but until a better solution is found, the functions
+    /// accepting options other than the default will be marked unsafe.
+    ///
+    /// The default size is 16 MiB.
+    pub heap_size: usize,
 }
 
 impl Alarmo {
-    pub unsafe fn init() -> &'static mut Alarmo {
+    /// Initializes the Alarmo abstraction layer.
+    ///
+    /// ## Panics
+    /// Panics on future invocations after the first.
+    ///
+    /// ## Safety
+    /// Behavior is undefined if peripherals are accessed/configured before calling this function.
+    /// As such, it is recommended to call this function as early as possible, preferably as the
+    /// first instruction in `main`.
+    pub unsafe fn init() -> Alarmo {
+        Self::init_with_options(AlarmoOptions::default())
+    }
+
+    pub unsafe fn init_with_options(options: AlarmoOptions) -> Alarmo {
         let mut cortex = cortex_m::Peripherals::take().unwrap();
 
         arch::enable_instruction_cache(&mut cortex);
@@ -50,6 +90,9 @@ impl Alarmo {
         let rcc = peripherals.RCC.constrain();
         let ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
 
+        #[cfg(feature = "alloc")]
+        e_alloc::init_heap(options.heap_size);
+
         // Split GPIO
         let gpioa = peripherals.GPIOA.split(ccdr.peripheral.GPIOA);
         let gpiob = peripherals.GPIOB.split(ccdr.peripheral.GPIOB);
@@ -57,7 +100,7 @@ impl Alarmo {
         let gpiog = peripherals.GPIOG.split_without_reset(ccdr.peripheral.GPIOG);
 
         // Split timers
-        let timers = Timers::new(
+        let (dial_timers, disp_timer) = pac::timers::split_timers(
             &ccdr.clocks,
             peripherals.TIM1,
             peripherals.TIM3,
@@ -70,32 +113,37 @@ impl Alarmo {
         );
 
         // Enable GPIO for FMC and init SRAM
-        let disp_pin = pac::sram::init(peripherals.FMC, gpioc.pc7);
+        let disp_pin = unsafe { pac::sram::init(peripherals.FMC, gpioc.pc7) };
         // Enable the FMC clocks for SRAM
         ccdr.peripheral
             .FMC
             .kernel_clk_mux(stm32h7xx_hal::pac::rcc::d1ccipr::FMCSEL_A::Per)
             .enable();
 
-        ALARMO = Some(Alarmo {
-            delay: Delay::new(cortex.SYST, ccdr.clocks),
-            clocks: ccdr.clocks,
-            timers,
-            #[cfg(feature = "display")]
-            display_pins: Some((gpiog.pg4, disp_pin)),
-        });
-        ALARMO.as_mut().unwrap()
-    }
+        DELAY = Some(RefCell::new(Delay::new(cortex.SYST, ccdr.clocks)));
 
-    pub fn dial(&mut self) -> Dial {
-        Dial {
-            timers: &mut self.timers,
+        Alarmo {
+            delay: DELAY.as_ref().unwrap(),
+            clocks: ccdr.clocks,
+            dial: Dial {
+                timers: dial_timers,
+            },
+            #[cfg(feature = "display")]
+            display: display::AlarmoDisplay::new(
+                disp_timer,
+                disp_pin,
+                gpiog.pg4,
+                DELAY.as_ref().unwrap(),
+            ),
         }
     }
+}
 
-    #[cfg(feature = "display")]
-    pub unsafe fn init_display(&mut self) -> display::AlarmoDisplayInterface {
-        let (rs, sel) = self.display_pins.take().expect("display already init");
-        display::AlarmoDisplayInterface::init(&mut self.timers, rs, sel)
+impl Default for AlarmoOptions {
+    fn default() -> Self {
+        AlarmoOptions {
+            #[cfg(feature = "alloc")]
+            heap_size: 0x1000000, // 16 MiB
+        }
     }
 }

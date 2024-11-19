@@ -18,7 +18,7 @@ Consider this list of goals tentative:
 - [ ] Button inputs
 - [ ] Dial input
 - [x] Dial LED
-- [ ] Allocator with extended RAM
+- [x] Allocator with external RAM
 
 ## Usage
 
