@@ -12,6 +12,9 @@ use stm32h7xx_hal::{
     rcc::{CoreClocks, RccExt, ResetEnable},
 };
 
+#[cfg(all(feature = "alloc", feature = "panic"))]
+extern crate alloc; // For panic formatting
+
 mod arch;
 pub mod dial;
 mod hal_sys;
@@ -23,6 +26,9 @@ pub mod display;
 
 #[cfg(feature = "alloc")]
 mod e_alloc;
+
+#[cfg(feature = "panic")]
+pub mod panic;
 
 static mut DELAY: Option<RefCell<Delay>> = None;
 

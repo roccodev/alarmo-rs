@@ -4,9 +4,6 @@
 use alarmo::Alarmo;
 use cortex_m_rt::entry;
 
-// Panic handler is required
-use panic_halt as _;
-
 #[entry]
 fn main() -> ! {
     let mut alarmo = unsafe { Alarmo::init() };
@@ -33,6 +30,7 @@ fn main() -> ! {
 
     loop {
         if alarmo.buttons.dial_click() && cycle - last_press[0] > debounce {
+            panic!("Dial click");
             // Toggle
             if off {
                 alarmo.dial.set_color(

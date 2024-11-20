@@ -21,17 +21,20 @@ stm32h7xx-hal = { version = "0.16.0", features = ["stm32h735", "fmc", "rt"] }
 display-interface = { version = "0.5.0", optional = true }
 embedded-hal = "1.0"
 embedded-alloc = { version = "0.6.0", optional = true }
+mipidsi = { version = "0.8.0", optional = true }
+embedded-graphics = { version = "0.8.1", optional = true }
 
 [features]
 default = []
 display = ["display-interface"]
+display-mipidsi = ["display", "mipidsi", "embedded-graphics"]
 alloc = ["embedded-alloc", "cortex-m/critical-section-single-core"]
+panic = ["display-mipidsi"]
 
 [dev-dependencies]
 panic-halt = "1.0.0"
 panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
-mipidsi = "0.8.0"
-embedded-graphics = "0.8.1"
+
 
 [[example]]
 name = "lcd"

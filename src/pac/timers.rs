@@ -41,15 +41,7 @@ pub fn split_timers(
         .finalize();
 
     // also includes LCD backlight timer
-    let (_, (t3c4, t3c3)) = tim3
-        .pwm_advanced(
-            (pb1.into_alternate(), pc8.into_alternate()),
-            ccdr_tim3,
-            core_clocks,
-        )
-        .prescaler(0)
-        .period(u16::MAX)
-        .finalize();
+    let (t3c4, t3c3) = display_timer(core_clocks, tim3, pb1, pc8, ccdr_tim3);
 
     (
         DialTimers {
@@ -59,4 +51,27 @@ pub fn split_timers(
         },
         t3c4,
     )
+}
+
+pub fn display_timer(
+    core_clocks: &CoreClocks,
+    tim3: TIM3,
+    pb1: Pin<'B', 1>,
+    pc8: Pin<'C', 8>,
+    ccdr_tim3: Tim3,
+) -> (
+    Pwm<TIM3, 3, ComplementaryImpossible>,
+    Pwm<TIM3, 2, ComplementaryImpossible>,
+) {
+    // LCD backlight timer
+    let (_, (t3c4, t3c3)) = tim3
+        .pwm_advanced(
+            (pb1.into_alternate(), pc8.into_alternate()),
+            ccdr_tim3,
+            core_clocks,
+        )
+        .prescaler(0)
+        .period(u16::MAX)
+        .finalize();
+    (t3c4, t3c3)
 }
