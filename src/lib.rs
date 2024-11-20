@@ -1,6 +1,7 @@
 #![doc =  include_str!("../README.md")]
 #![no_std]
 
+use crate::input::{Buttons, ExtInterrupts};
 use core::cell::RefCell;
 use dial::Dial;
 use stm32h7xx_hal::{
@@ -14,6 +15,7 @@ use stm32h7xx_hal::{
 mod arch;
 pub mod dial;
 mod hal_sys;
+pub mod input;
 mod pac;
 
 #[cfg(feature = "display")]
@@ -40,6 +42,8 @@ pub struct Alarmo {
     pub clocks: CoreClocks,
     pub delay: &'static RefCell<Delay>,
     pub dial: Dial,
+    pub ext_interrupts: ExtInterrupts,
+    pub buttons: Buttons,
     #[cfg(feature = "display")]
     pub display: display::AlarmoDisplay,
 }
@@ -106,6 +110,14 @@ impl Alarmo {
             ccdr.peripheral.TIM3,
         );
 
+        // Split buttons
+        let exti = ExtInterrupts {
+            syscfg: peripherals.SYSCFG,
+            exti: peripherals.EXTI,
+            nvic: cortex.NVIC,
+        };
+        let buttons = Buttons::split(gpiog.pg5, gpiog.pg6, gpioc.pc5);
+
         // Enable GPIO for FMC and init SRAM
         let disp_pin = unsafe { pac::sram::init(peripherals.FMC, gpioc.pc7) };
         // Enable the FMC clocks for SRAM
@@ -122,6 +134,8 @@ impl Alarmo {
             dial: Dial {
                 timers: dial_timers,
             },
+            ext_interrupts: exti,
+            buttons,
             #[cfg(feature = "display")]
             display: display::AlarmoDisplay::new(
                 disp_timer,

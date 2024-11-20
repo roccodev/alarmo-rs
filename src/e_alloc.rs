@@ -5,7 +5,7 @@ static HEAP: Heap = Heap::empty();
 
 pub fn init_heap(size: usize) {
     let start_addr = cortex_m_rt::heap_start() as usize;
-    let end_addr = start_addr.checked_add(size).expect("size too large");
+    let end_addr = start_addr.checked_add(size).expect("size too large") - 1;
     assert!(
         end_addr < 0x70_00_00_00 + 0x02_00_00_00,
         "end address out of OCTOSPI2"

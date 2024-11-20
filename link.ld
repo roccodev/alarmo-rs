@@ -22,6 +22,9 @@ OUTPUT_ARCH(arm)
   "Address (..) is out of bounds" in the disassembly produced by `objdump`.
 */
 
+/* For interrupt definitions from the stm32h7 crate */
+INCLUDE "device.x"
+
 /* ALARMO memory layout start */
 MEMORY
 {
@@ -136,11 +139,10 @@ SECTIONS
     . = ALIGN(0x100);
   } > FLASH
 
-  PROVIDE(_stext = ADDR(.vector_table) + SIZEOF(.vector_table));
-
   /* ### .text */
-  .text _stext :
+  .text :
   {
+    . = ALIGN(4);
     __stext = .;
     *(.Reset);
 
@@ -309,15 +311,6 @@ Possible solutions, from most likely to less likely:
 - Disable the 'device' feature of cortex-m-rt to build a generic application (a dependency
 may be enabling it)
 - Supply the interrupt handlers yourself. Check the documentation for details.");
-
-/* ## .text */
-ASSERT(ADDR(.vector_table) + SIZEOF(.vector_table) <= _stext, "
-ERROR(cortex-m-rt): The .text section can't be placed inside the .vector_table section
-Set _stext to an address greater than the end of .vector_table (See output of `nm`)");
-
-ASSERT(_stext > ORIGIN(FLASH) && _stext < ORIGIN(FLASH) + LENGTH(FLASH), "
-ERROR(cortex-m-rt): The .text section must be placed inside the FLASH memory.
-Set _stext to an address within the FLASH region.");
 
 /* # Other checks */
 ASSERT(SIZEOF(.got) == 0, "
