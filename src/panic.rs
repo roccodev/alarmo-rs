@@ -146,7 +146,7 @@ unsafe fn show_panic(data: PanicData) {
         .bounding_box()
         .bottom_right()
         .map(|p| p.y)
-        .unwrap_or_default();
+        .unwrap_or(50);
     text_msg.draw(&mut disp).ok();
 
     // Draw file name and line

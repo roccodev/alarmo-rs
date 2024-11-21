@@ -4,6 +4,8 @@
 use crate::input::{Buttons, ExtInterrupts};
 use core::cell::RefCell;
 use dial::Dial;
+use stm32h7xx_hal::rcc::PllConfigStrategy;
+use stm32h7xx_hal::time::Hertz;
 use stm32h7xx_hal::{
     delay::Delay,
     pac::Peripherals as Stm32Peripherals,
@@ -52,6 +54,8 @@ pub struct Alarmo {
     pub display: display::AlarmoDisplay,
     #[cfg(feature = "usb")]
     pub usb1: stm32h7xx_hal::usb_hs::USB1,
+    #[cfg(feature = "emmc")]
+    pub emmc: stm32h7xx_hal::sdmmc::Sdmmc<stm32h7xx_hal::pac::SDMMC2, stm32h7xx_hal::sdmmc::Emmc>,
 }
 
 pub struct AlarmoOptions {
@@ -65,6 +69,13 @@ pub struct AlarmoOptions {
     ///
     /// The default size is 16 MiB.
     pub heap_size: usize,
+    /// The frequency of the system clock.
+    ///
+    /// Higher values can be useful when using USB and/or
+    /// eMMC peripherals.
+    ///
+    /// The default value, `None`, uses the value from 2ndloader.
+    pub sys_ck: Option<Hertz>,
 }
 
 impl Alarmo {
@@ -91,7 +102,18 @@ impl Alarmo {
         let peripherals = Stm32Peripherals::take().unwrap();
         let pwr = peripherals.PWR.constrain();
         let pwr_cfg = pwr.freeze();
-        let rcc = peripherals.RCC.constrain();
+        let mut rcc = peripherals.RCC.constrain();
+
+        if cfg!(feature = "emmc") {
+            rcc = rcc
+                .pll2_r_ck(200.MHz())
+                .pll2_strategy(PllConfigStrategy::Iterative);
+        }
+
+        if let Some(sys_ck) = options.sys_ck {
+            rcc = rcc.sys_ck(sys_ck);
+        }
+
         let mut ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
 
         // 48MHz clock for USB1
@@ -108,6 +130,7 @@ impl Alarmo {
         let gpioa = peripherals.GPIOA.split(ccdr.peripheral.GPIOA);
         let gpiob = peripherals.GPIOB.split(ccdr.peripheral.GPIOB);
         let gpioc = peripherals.GPIOC.split(ccdr.peripheral.GPIOC);
+        let gpiod = peripherals.GPIOD.split(ccdr.peripheral.GPIOD);
         let gpiog = peripherals.GPIOG.split_without_reset(ccdr.peripheral.GPIOG);
 
         #[cfg(feature = "usb")]
@@ -118,6 +141,19 @@ impl Alarmo {
             peripherals.OTG1_HS_DEVICE,
             peripherals.OTG1_HS_PWRCLK,
             ccdr.peripheral.USB1OTG,
+            &ccdr.clocks,
+        );
+
+        #[cfg(feature = "emmc")]
+        let emmc = pac::sdmmc::split_emmc(
+            gpiod.pd6,
+            gpiod.pd7,
+            gpiog.pg9,
+            gpiog.pg10,
+            gpiog.pg11,
+            gpiob.pb4.into_analog(),
+            peripherals.SDMMC2,
+            ccdr.peripheral.SDMMC2,
             &ccdr.clocks,
         );
 
@@ -169,6 +205,8 @@ impl Alarmo {
             ),
             #[cfg(feature = "usb")]
             usb1,
+            #[cfg(feature = "emmc")]
+            emmc,
         }
     }
 }
@@ -178,6 +216,7 @@ impl Default for AlarmoOptions {
         AlarmoOptions {
             #[cfg(feature = "alloc")]
             heap_size: 0x1000000, // 16 MiB
+            sys_ck: None,
         }
     }
 }

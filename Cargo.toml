@@ -32,11 +32,13 @@ display-mipidsi = ["display", "mipidsi", "embedded-graphics"]
 alloc = ["embedded-alloc", "cortex-m/critical-section-single-core"]
 panic = ["display-mipidsi"]
 usb = ["usb-device", "stm32h7xx-hal/usb_hs"]
+emmc = ["stm32h7xx-hal/sdmmc"]
 
 [dev-dependencies]
 panic-halt = "1.0.0"
 panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
 usbd-serial = { version = "0.2.0" }
+usbd-storage = { version = "1.0.0", features = ["scsi", "bbb"] }
 
 [[example]]
 name = "lcd"
@@ -57,3 +59,7 @@ required-features = ["usb"]
 [[example]]
 name = "usb_serial_interrupt"
 required-features = ["usb"]
+
+[[example]]
+name = "usb_scsi"
+required-features = ["usb", "emmc", "panic", "alloc"]
