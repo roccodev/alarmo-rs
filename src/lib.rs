@@ -6,16 +6,13 @@ use core::cell::RefCell;
 use dial::Dial;
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::GpioExt,
     pac::Peripherals as Stm32Peripherals,
-    pwr::PwrExt,
-    rcc::{CoreClocks, RccExt, ResetEnable},
+    rcc::{CoreClocks, ResetEnable},
 };
 
 #[cfg(all(feature = "alloc", feature = "panic"))]
 extern crate alloc; // For panic formatting
 
-mod arch;
 pub mod dial;
 mod hal_sys;
 pub mod input;
@@ -52,6 +49,8 @@ pub struct Alarmo {
     pub buttons: Buttons,
     #[cfg(feature = "display")]
     pub display: display::AlarmoDisplay,
+    #[cfg(feature = "usb")]
+    pub usb1: stm32h7xx_hal::usb_hs::USB1,
 }
 
 pub struct AlarmoOptions {
@@ -84,15 +83,23 @@ impl Alarmo {
     pub unsafe fn init_with_options(options: AlarmoOptions) -> Alarmo {
         let mut cortex = cortex_m::Peripherals::take().unwrap();
 
-        arch::enable_instruction_cache(&mut cortex);
-        arch::enable_data_cache(&mut cortex);
-        arch::enable_interrupts();
+        cortex.SCB.enable_icache();
+        cortex.SCB.enable_dcache(&mut cortex.CPUID);
+        cortex_m::interrupt::enable();
 
         let peripherals = Stm32Peripherals::take().unwrap();
         let pwr = peripherals.PWR.constrain();
         let pwr_cfg = pwr.freeze();
         let rcc = peripherals.RCC.constrain();
-        let ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
+        use stm32h7xx_hal::prelude::*;
+        let mut ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
+
+        // 48MHz clock for USB1
+        if cfg!(feature = "usb") {
+            let _ = ccdr.clocks.hsi48_ck().expect("HSI48 must run");
+            ccdr.peripheral
+                .kernel_usb_clk_mux(stm32h7xx_hal::rcc::rec::UsbClkSel::Hsi48);
+        }
 
         #[cfg(feature = "alloc")]
         e_alloc::init_heap(options.heap_size);
@@ -102,6 +109,17 @@ impl Alarmo {
         let gpiob = peripherals.GPIOB.split(ccdr.peripheral.GPIOB);
         let gpioc = peripherals.GPIOC.split(ccdr.peripheral.GPIOC);
         let gpiog = peripherals.GPIOG.split_without_reset(ccdr.peripheral.GPIOG);
+
+        #[cfg(feature = "usb")]
+        let usb1 = pac::usb::split_usb(
+            gpioa.pa11,
+            gpioa.pa12,
+            peripherals.OTG1_HS_GLOBAL,
+            peripherals.OTG1_HS_DEVICE,
+            peripherals.OTG1_HS_PWRCLK,
+            ccdr.peripheral.USB1OTG,
+            &ccdr.clocks,
+        );
 
         // Split timers
         let (dial_timers, disp_timer) = pac::timers::split_timers(
@@ -149,6 +167,8 @@ impl Alarmo {
                 gpiog.pg4,
                 DELAY.as_ref().unwrap(),
             ),
+            #[cfg(feature = "usb")]
+            usb1,
         }
     }
 }

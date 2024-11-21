@@ -1,6 +1,6 @@
 [package]
 name = "alarmo"
-version = "0.0.4"
+version = "0.0.5"
 description = "Provides a convenient API to bootstrap firmware and access peripherals on the Nintendo Alarmo"
 authors = ["RoccoDev <hey@rocco.dev>"]
 edition = "2021"
@@ -18,11 +18,12 @@ targets = ["thumbv7em-none-eabihf"]
 cortex-m = "0.7.5"
 cortex-m-rt = { version = "0.7.5", features = ["set-vtor", "set-sp", "zero-init-ram"] }
 stm32h7xx-hal = { version = "0.16.0", features = ["stm32h735", "fmc", "rt"] }
-display-interface = { version = "0.5.0", optional = true }
 embedded-hal = "1.0"
+display-interface = { version = "0.5.0", optional = true }
 embedded-alloc = { version = "0.6.0", optional = true }
 mipidsi = { version = "0.8.0", optional = true }
 embedded-graphics = { version = "0.8.1", optional = true }
+usb-device = { version = "0.3", optional = true }
 
 [features]
 default = []
@@ -30,11 +31,12 @@ display = ["display-interface"]
 display-mipidsi = ["display", "mipidsi", "embedded-graphics"]
 alloc = ["embedded-alloc", "cortex-m/critical-section-single-core"]
 panic = ["display-mipidsi"]
+usb = ["usb-device", "stm32h7xx-hal/usb_hs"]
 
 [dev-dependencies]
 panic-halt = "1.0.0"
 panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
-
+usbd-serial = { version = "0.2.0" }
 
 [[example]]
 name = "lcd"
@@ -43,3 +45,15 @@ required-features = ["display"]
 [[example]]
 name = "alloc"
 required-features = ["alloc", "display"]
+
+[[example]]
+name = "panic"
+required-features = ["alloc", "panic"]
+
+[[example]]
+name = "usb_serial"
+required-features = ["usb"]
+
+[[example]]
+name = "usb_serial_interrupt"
+required-features = ["usb"]

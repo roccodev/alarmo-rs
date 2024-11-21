@@ -24,7 +24,7 @@ Consider this list of goals tentative:
 - [x] Dial LED
 - [x] Allocator with external RAM (enable the `alloc` feature)
 - [ ] Sound
-- [ ] USB-CDC
+- [x] USB-CDC (`usb-device`, `usbd-serial`)
 - [ ] WLAN
 
 ## Usage

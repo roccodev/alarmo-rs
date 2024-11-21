@@ -27,7 +27,7 @@ unsafe fn panic(info: &PanicInfo) -> ! {
 }
 
 struct PanicData {
-    message: [u8; 128],
+    message: [u8; 256],
     message_len: usize,
     file: [u8; 64],
     file_len: usize,
@@ -44,19 +44,19 @@ unsafe fn handle_panic(info: &PanicInfo) -> ! {
 
     let location = info.location();
     let mut panic_data = PanicData {
-        message: [0u8; 128],
+        message: [0u8; 256],
         message_len: 0,
         file: [0u8; 64],
         file_len: 0,
         line: 10,
     };
     if let Some(message) = message {
-        let take = message.len().min(128);
+        let take = message.len().min(panic_data.message.len());
         panic_data.message[..take].copy_from_slice(&message.as_bytes()[..take]);
         panic_data.message_len = take;
     }
     if let Some(location) = location {
-        let take = location.file().len().min(64);
+        let take = location.file().len().min(panic_data.file.len());
         panic_data.line = location.line();
         panic_data.file[..take].copy_from_slice(&location.file().as_bytes()[..take]);
         panic_data.file_len = take;
