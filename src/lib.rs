@@ -7,6 +7,7 @@ use dial::Dial;
 use stm32h7xx_hal::{
     delay::Delay,
     pac::Peripherals as Stm32Peripherals,
+    prelude::*,
     rcc::{CoreClocks, ResetEnable},
 };
 
@@ -91,7 +92,6 @@ impl Alarmo {
         let pwr = peripherals.PWR.constrain();
         let pwr_cfg = pwr.freeze();
         let rcc = peripherals.RCC.constrain();
-        use stm32h7xx_hal::prelude::*;
         let mut ccdr = rcc.freeze(pwr_cfg, &peripherals.SYSCFG);
 
         // 48MHz clock for USB1
