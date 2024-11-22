@@ -12,6 +12,7 @@ dependencies = [
  "embedded-alloc",
  "embedded-graphics",
  "embedded-hal 1.0.0",
+ "micromath",
  "mipidsi",
  "panic-halt",
  "panic-rtt-target",

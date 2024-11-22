@@ -1,6 +1,6 @@
 //! Provides a panic handler that displays the panic message on the Alarmo's display
 
-use crate::display::HalDelay;
+use crate::delay::HalDelay;
 use crate::{display, pac};
 use core::cell::RefCell;
 use core::panic::PanicInfo;

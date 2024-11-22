@@ -1,6 +1,10 @@
 //! Dial peripheral, used for input and LED
 
+use crate::pac::adc::AdcBuffers;
 use crate::pac::timers::DialTimers;
+use core::cell::UnsafeCell;
+use cortex_m::peripheral::SCB;
+use micromath::F32Ext;
 use stm32h7xx_hal::prelude::_embedded_hal_PwmPin;
 
 /// Dial peripheral, found at the top of the device.
@@ -11,10 +15,47 @@ use stm32h7xx_hal::prelude::_embedded_hal_PwmPin;
 ///
 /// [Dial LED example]: https://github.com/roccodev/alarmo-rs/blob/master/examples/dial_led.rs
 pub struct Dial {
-    pub(crate) timers: DialTimers,
+    timers: DialTimers,
+    adc_buffers: AdcBuffers,
+    scb: UnsafeCell<SCB>,
 }
 
 impl Dial {
+    pub(crate) fn new(timers: DialTimers, adc_buffers: AdcBuffers, scb: SCB) -> Self {
+        Self {
+            timers,
+            adc_buffers,
+            scb: UnsafeCell::new(scb),
+        }
+    }
+
+    /// Returns the last known rotation of the dial, in radians (`(-pi, pi]`)
+    pub fn rotation_rad(&self) -> f32 {
+        unsafe {
+            // The cache functions do not actually use self
+            let scb = &mut *self.scb.get();
+            scb.invalidate_dcache_by_address(self.adc_buffers.adc1 as usize, 32);
+            scb.invalidate_dcache_by_address(self.adc_buffers.adc2 as usize, 32);
+        }
+        let (y, x) = unsafe {
+            (
+                self.adc_buffers.adc1.read_volatile(),
+                self.adc_buffers.adc2.read_volatile(),
+            )
+        };
+        let (y, x) = (y as f32 / 65535f32, x as f32 / 65535f32);
+        f32::atan2(y - 0.5, x - 0.5)
+    }
+
+    /// Returns the last known rotation of the dial, in normalized degrees (`[0, 360)`)
+    pub fn rotation_deg(&self) -> f32 {
+        let mut rot = self.rotation_rad().to_degrees();
+        if rot < 0.0 {
+            rot = (360f32 - ((-rot) % 360f32)) % 360f32;
+        }
+        rot
+    }
+
     /// Turns the lights on, making sure the respective timers are running.
     pub fn lights_on(&mut self) {
         self.timers.tim1_ch1.enable();

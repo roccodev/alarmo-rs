@@ -1,7 +1,8 @@
 #![no_std]
 #![no_main]
 
-use alarmo::{display::HalDelay, Alarmo};
+use alarmo::delay::HalDelay;
+use alarmo::Alarmo;
 use cortex_m_rt::entry;
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyle},

@@ -8,7 +8,8 @@ extern crate alloc;
 use alloc::string::ToString;
 use alloc::vec;
 
-use alarmo::display::{AlarmoDisplay, HalDelay};
+use alarmo::delay::HalDelay;
+use alarmo::display::AlarmoDisplay;
 use alarmo::Alarmo;
 
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;

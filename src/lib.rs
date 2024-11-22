@@ -16,6 +16,7 @@ use stm32h7xx_hal::{
 #[cfg(all(feature = "alloc", feature = "panic"))]
 extern crate alloc; // For panic formatting
 
+pub mod delay;
 pub mod dial;
 mod hal_sys;
 pub mod input;
@@ -102,7 +103,7 @@ impl Alarmo {
         let peripherals = Stm32Peripherals::take().unwrap();
         let pwr = peripherals.PWR.constrain();
         let pwr_cfg = pwr.freeze();
-        let mut rcc = peripherals.RCC.constrain();
+        let mut rcc = peripherals.RCC.constrain().pll2_p_ck(40.MHz());
 
         if cfg!(feature = "emmc") {
             rcc = rcc
@@ -188,12 +189,21 @@ impl Alarmo {
 
         DELAY = Some(RefCell::new(Delay::new(cortex.SYST, ccdr.clocks)));
 
+        let adc = pac::adc::split_adc(
+            peripherals.ADC1,
+            peripherals.ADC2,
+            gpioc.pc4,
+            gpiob.pb0,
+            peripherals.DMA1,
+            ccdr.peripheral.ADC12,
+            ccdr.peripheral.DMA1,
+            &ccdr.clocks,
+        );
+
         Alarmo {
             delay: DELAY.as_ref().unwrap(),
             clocks: ccdr.clocks,
-            dial: Dial {
-                timers: dial_timers,
-            },
+            dial: Dial::new(dial_timers, adc, cortex.SCB),
             ext_interrupts: exti,
             buttons,
             #[cfg(feature = "display")]

@@ -1,3 +1,4 @@
+pub mod adc;
 pub mod sram;
 pub mod timers;
 

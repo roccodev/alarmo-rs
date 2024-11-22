@@ -20,14 +20,21 @@ Consider this list of goals tentative:
 - [x] LCD frontend using the `display_interface` crate
 - [ ] Better build environment (automate `objcopy` and firmware signing)
 - [x] Button inputs (+ interrupts)
-- [ ] Dial input
+- [x] Dial input
 - [x] Dial LED
 - [x] Allocator with external RAM (enable the `alloc` feature)
 - [ ] Sound
 - [x] USB-CDC (`usb-device`, `usbd-serial`)
+- [x] USB Mass Storage (access eMMC via USB)
 - [ ] WLAN
 
 ## Usage
+
+First, you may need to install the ARM Rust target:
+
+```
+rustup target add thumbv7em-none-eabihf
+```
 
 ### Running an example
 
