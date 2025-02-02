@@ -48,7 +48,7 @@ cargo build --example lcd --features display
 2. Convert the example ELF into BINF:
 
 ```
-arm-none-eabi-objcopy target/thumbv7em-none-eabihf/debug/examples/lcd lcd.bin
+arm-none-eabi-objcopy -O binary target/thumbv7em-none-eabihf/debug/examples/lcd lcd.bin
 ```
 
 3. Sign the firmware to get the `a.bin`.
@@ -80,7 +80,7 @@ cargo build
 4. Convert the result ELF into BINF (change `debug` to `release` for `--release`):
 
 ```
-arm-none-eabi-objcopy target/thumbv7em-none-eabihf/debug/your_crate your_crate.bin
+arm-none-eabi-objcopy -O binary target/thumbv7em-none-eabihf/debug/your_crate your_crate.bin
 ```
 
 3. Sign the firmware to get the `a.bin`.
